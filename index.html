@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Magazzino Tribunali</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Magazzino Tribunali</h2>
+
+<select id="sede">
+
+<option value="TRIBUNALE_PENALE_LECCE">Tribunale Penale Lecce</option>
+<option value="TRIBUNALE_CIVILE_LECCE">Tribunale Civile Lecce</option>
+<option value="GDP_CORTE_LECCE">GDP Corte Lecce</option>
+<option value="TRIBUNALE_MINORI_LECCE">Tribunale Minori Lecce</option>
+<option value="AULA_BUNKER_LECCE">Aula Bunker Lecce</option>
+<option value="TRIBUNALE_PROCURA_BRINDISI">Tribunale Procura Brindisi</option>
+<option value="TRIBUNALE_TARANTO">Tribunale Ordinario Taranto</option>
+<option value="MINORI_TARANTO">Tribunale Minori Taranto</option>
+<option value="PROCURA_TARANTO">Procura Taranto</option>
+<option value="CORTE_APPELLO_TARANTO">Corte Appello Taranto</option>
+
+</select>
+
+<div id="reader"></div>
+
+<input id="barcode" placeholder="Codice prodotto">
+
+<button onclick="startScanner()">Scansiona codice</button>
+
+<button onclick="verifica()">Verifica prodotto</button>
+
+<br><br>
+
+<input id="qta" type="number" value="1">
+
+<button class="carica" onclick="carica()">Carica prodotto</button>
+
+<button class="scarica" onclick="scarica()">Scarica prodotto</button>
+
+<hr>
+
+<h3>Carica DDT</h3>
+
+<input type="file" id="ddt" accept="image/*" capture="environment">
+
+<button onclick="caricaDDT()">Carica DDT</button>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+
+</html>
