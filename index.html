@@ -1,68 +1,90 @@
 <!DOCTYPE html>
 <html lang="it">
-
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Magazzino Tribunali</title>
-
-<link rel="stylesheet" href="style.css">
-
-<script src="https://unpkg.com/html5-qrcode"></script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magazzino Tribunali</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
-
 <body>
+  <div class="wrap">
+    <div class="card" id="loginCard">
+      <h1>Magazzino Tribunali</h1>
+      <p class="sub">Accesso operatore con PIN</p>
 
-<div class="container">
+      <label for="operatoreSelect">Operatore</label>
+      <select id="operatoreSelect">
+        <option value="">Seleziona operatore</option>
+      </select>
 
-<h2>Magazzino Tribunali</h2>
+      <label for="pinOperatore">PIN operatore</label>
+      <input id="pinOperatore" type="password" placeholder="Inserisci PIN" />
 
-<select id="sede">
+      <button class="btn btn-primary" onclick="doLogin()">Entra</button>
+      <div id="loginMsg" class="msg info">Seleziona il tuo nome e inserisci il PIN.</div>
+    </div>
 
-<option value="TRIBUNALE_PENALE_LECCE">Tribunale Penale Lecce</option>
-<option value="TRIBUNALE_CIVILE_LECCE">Tribunale Civile Lecce</option>
-<option value="GDP_CORTE_LECCE">GDP Corte Lecce</option>
-<option value="TRIBUNALE_MINORI_LECCE">Tribunale Minori Lecce</option>
-<option value="AULA_BUNKER_LECCE">Aula Bunker Lecce</option>
-<option value="TRIBUNALE_PROCURA_BRINDISI">Tribunale Procura Brindisi</option>
-<option value="TRIBUNALE_TARANTO">Tribunale Ordinario Taranto</option>
-<option value="MINORI_TARANTO">Tribunale Minori Taranto</option>
-<option value="PROCURA_TARANTO">Procura Taranto</option>
-<option value="CORTE_APPELLO_TARANTO">Corte Appello Taranto</option>
+    <div class="card hidden" id="appCard">
+      <h1>Magazzino Tribunali</h1>
 
-</select>
+      <div class="chips">
+        <span class="chip" id="chipOperatore">Operatore: --</span>
+        <span class="chip" id="chipRuolo">Ruolo: --</span>
+      </div>
 
-<div id="reader"></div>
+      <label for="sede">Sede</label>
+      <select id="sede"></select>
 
-<input id="barcode" placeholder="Codice prodotto">
+      <button class="btn btn-success" onclick="openAction('CARICO')">Carica Prodotto</button>
+      <button class="btn btn-danger" onclick="openAction('SCARICO')">Scarica Prodotto</button>
+      <button class="btn btn-light" onclick="logoutApp()">Cambia operatore</button>
 
-<button onclick="startScanner()">Scansiona codice</button>
+      <div id="mainMsg" class="msg info">Seleziona la sede e scegli l'operazione.</div>
+    </div>
 
-<button onclick="verifica()">Verifica prodotto</button>
+    <div class="card hidden" id="movementCard">
+      <h2 id="movementTitle">Movimento prodotto</h2>
 
-<br><br>
+      <label for="barcode">Codice prodotto</label>
+      <input id="barcode" placeholder="Digita il codice oppure scansiona il QR" inputmode="numeric" />
 
-<input id="qta" type="number" value="1">
+      <button class="btn btn-light" onclick="startScanner()">Scansiona QR prodotto</button>
+      <div id="reader" class="reader hidden"></div>
 
-<button class="carica" onclick="carica()">Carica prodotto</button>
+      <button class="btn btn-light" onclick="lookupProduct()">Verifica prodotto</button>
+      <div id="productMsg" class="msg info hidden"></div>
 
-<button class="scarica" onclick="scarica()">Scarica prodotto</button>
+      <label for="qty">Quantità</label>
+      <input id="qty" type="number" min="1" value="1" />
 
-<hr>
+      <label for="noteMov">Nota</label>
+      <textarea id="noteMov" placeholder="Nota facoltativa"></textarea>
 
-<h3>Carica DDT</h3>
+      <button class="btn btn-primary" onclick="saveMovement()">Conferma movimento</button>
+      <button class="btn btn-light" onclick="closeMovement()">Chiudi</button>
+    </div>
 
-<input type="file" id="ddt" accept="image/*" capture="environment">
+    <div class="card">
+      <h2>DDT</h2>
+      <div class="msg warn">
+        In questa versione GitHub + Apps Script, il DDT non è incluso perché l’upload file verso Apps Script tramite JSONP non è affidabile.
+        Ti conviene gestirlo in una seconda fase con un endpoint dedicato.
+      </div>
+    </div>
 
-<button onclick="caricaDDT()">Carica DDT</button>
+    <div id="progressOverlay" class="overlay hidden">
+      <div class="overlay-box">
+        <div class="spinner"></div>
+        <div id="progressTitle" class="progress-title">Operazione in corso…</div>
+        <div class="progress-wrap">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+        <div id="progressText" class="progress-text">Attendere qualche secondo…</div>
+      </div>
+    </div>
+  </div>
 
-</div>
-
-<script src="app.js"></script>
-
+  <script src="app.js"></script>
 </body>
-
 </html>
