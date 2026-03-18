@@ -1,5 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzkdFC-9qrwcBkO2y5UefeXgRfcvPaQINZKxALLKRpDpnXzRq_9jVQ9aq2a8LwAQi_F/exec";
-const DDT_CHUNK_SIZE = 45000;
+const API_URL = "INCOLLA_QUI_URL_WEBAPP_APPS_SCRIPT";
 
 let APP = {
   user: null,
@@ -192,7 +191,6 @@ function logoutApp(){
   show("loginCard");
   hide("appCard");
   hide("movementCard");
-  hide("ddtCard");
   $("pinOperatore").value = "";
   setMsg("loginMsg", "Sessione chiusa.", "info");
 }
@@ -217,7 +215,6 @@ function openAction(tipo){
   $("noteMov").value = "";
   hide("productMsg");
   hide("reader");
-  hide("ddtCard");
   show("movementCard");
 }
 
@@ -226,19 +223,25 @@ function closeMovement(){
   hide("movementCard");
 }
 
-function openDdt(){
-  stopScanner();
-  hide("movementCard");
-  $("ddtFile").value = "";
-  $("ddtNote").value = "";
-  $("ddtPreview").src = "";
-  hide("ddtPreview");
-  hide("ddtMsg");
-  show("ddtCard");
-}
+function openDdtPage(){
+  if (!APP.user || !APP.user.operatoreId) {
+    setMsg("mainMsg", "Sessione non valida.", "err");
+    return;
+  }
 
-function closeDdt(){
-  hide("ddtCard");
+  const sede = $("sede").value;
+  if (!sede) {
+    setMsg("mainMsg", "Seleziona una sede.", "err");
+    return;
+  }
+
+  const url =
+    API_URL +
+    "?page=ddt" +
+    "&operatoreId=" + encodeURIComponent(APP.user.operatoreId) +
+    "&sede=" + encodeURIComponent(sede);
+
+  window.open(url, "_blank");
 }
 
 function startScanner(){
@@ -379,124 +382,6 @@ async function saveMovement(){
   } catch (err) {
     stopProgress();
     setMsg("mainMsg", err.message, "err");
-  }
-}
-
-function previewDdt(input){
-  const file = input.files && input.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e){
-    $("ddtPreview").src = e.target.result;
-    show("ddtPreview");
-  };
-  reader.readAsDataURL(file);
-}
-
-function resizeImageToJpegBase64(file, maxWidth = 1400, quality = 0.72){
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = function(e){
-      const img = new Image();
-
-      img.onload = function(){
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
-        resolve(dataUrl);
-      };
-
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-function splitStringIntoChunks(str, chunkSize){
-  const chunks = [];
-  for (let i = 0; i < str.length; i += chunkSize) {
-    chunks.push(str.substring(i, i + chunkSize));
-  }
-  return chunks;
-}
-
-async function uploadDDT(){
-  const sede = $("sede").value;
-  const note = $("ddtNote").value.trim();
-  const file = $("ddtFile").files && $("ddtFile").files[0];
-
-  if (!file) {
-    setMsg("ddtMsg", "Seleziona una foto del DDT.", "err");
-    return;
-  }
-
-  try {
-    startProgress("Preparazione DDT", "Compressione immagine in corso…");
-
-    const dataUrl = await resizeImageToJpegBase64(file);
-    const base64 = dataUrl.split(",")[1];
-    const chunks = splitStringIntoChunks(base64, DDT_CHUNK_SIZE);
-    const uploadId = "DDT_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
-
-    await jsonpRequest({
-      action: "ddtStart",
-      uploadId: uploadId,
-      sede: sede,
-      note: note,
-      operatoreId: APP.user.operatoreId,
-      fileName: file.name || "ddt.jpg",
-      totalChunks: chunks.length
-    });
-
-    for (let i = 0; i < chunks.length; i++) {
-      $("progressTitle").textContent = "Caricamento DDT";
-      $("progressText").textContent = "Invio blocco " + (i + 1) + " di " + chunks.length;
-      $("progressBar").style.width = Math.round(((i + 1) / chunks.length) * 100) + "%";
-
-      const res = await jsonpRequest({
-        action: "ddtChunk",
-        uploadId: uploadId,
-        index: i,
-        chunk: chunks[i]
-      });
-
-      if (!res.ok) throw new Error(res.error || "Errore invio blocco DDT");
-    }
-
-    const finishRes = await jsonpRequest({
-      action: "ddtFinish",
-      uploadId: uploadId
-    });
-
-    if (!finishRes.ok) throw new Error(finishRes.error || "Errore finale upload DDT");
-
-    stopProgress("DDT salvato");
-    setMsg(
-      "ddtMsg",
-      'DDT caricato correttamente.<br><a href="' + finishRes.url + '" target="_blank">Apri file</a>',
-      "ok"
-    );
-  } catch (err) {
-    stopProgress();
-    setMsg("ddtMsg", err.message, "err");
   }
 }
 
