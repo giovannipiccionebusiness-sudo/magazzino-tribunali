@@ -1,4 +1,4 @@
-const API_URL = "INCOLLA_QUI_URL_WEBAPP_APPS_SCRIPT";
+const API_URL = "https://script.google.com/macros/s/AKfycbwSX0ua6UJSW9Jf0oyW2kbNCmiiJR6MUvbJaq-hTfEmuKOm_4OLo9NpvNPPXJemhWIh/exec";
 
 let APP = {
   user: null,
