@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzEaEezCdRAKbz0dEUN8TpWDhLl7CVkPJe-74FL7debc6rdPujwTrkrVJpU8gSVc0WL/exec";
+const API_URL = "INCOLLA_QUI_URL_WEBAPP_APPS_SCRIPT";
 
 let APP = {
   user: null,
@@ -279,7 +279,6 @@ function startScanner(){
         $("barcode").value = decodedText;
         setMsg("productMsg", "Codice a barre rilevato: <b>" + decodedText + "</b>", "ok");
         stopScanner();
-        // lookupProduct(); // attiva questa riga se vuoi verifica automatica
       },
       () => {}
     ).then(() => {
