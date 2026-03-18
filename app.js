@@ -1,4 +1,4 @@
-const API_URL = "INCOLLA_QUI_URL_WEBAPP_APPS_SCRIPT";
+const API_URL = "https://script.google.com/macros/s/AKfycbzkdFC-9qrwcBkO2y5UefeXgRfcvPaQINZKxALLKRpDpnXzRq_9jVQ9aq2a8LwAQi_F/exec";
 const DDT_CHUNK_SIZE = 45000;
 
 let APP = {
