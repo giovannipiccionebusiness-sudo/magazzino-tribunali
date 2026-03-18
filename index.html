@@ -38,7 +38,7 @@
 
       <button class="btn btn-success" onclick="openAction('CARICO')">Carica Prodotto</button>
       <button class="btn btn-danger" onclick="openAction('SCARICO')">Scarica Prodotto</button>
-      <button class="btn btn-warning" onclick="openDdt()">Carica DDT</button>
+      <button class="btn btn-warning" onclick="openDdtPage()">Carica DDT</button>
       <button class="btn btn-light" onclick="logoutApp()">Cambia operatore</button>
 
       <div id="mainMsg" class="msg info">Seleziona la sede e scegli l'operazione.</div>
@@ -64,23 +64,6 @@
 
       <button class="btn btn-primary" onclick="saveMovement()">Conferma movimento</button>
       <button class="btn btn-light" onclick="closeMovement()">Chiudi</button>
-    </div>
-
-    <div class="card hidden" id="ddtCard">
-      <h2>Carica DDT</h2>
-
-      <label for="ddtFile">Foto DDT</label>
-      <input id="ddtFile" type="file" accept="image/*" capture="environment" onchange="previewDdt(this)" />
-
-      <img id="ddtPreview" class="preview hidden" alt="Anteprima DDT" />
-
-      <label for="ddtNote">Nota</label>
-      <textarea id="ddtNote" placeholder="Numero bolla o note"></textarea>
-
-      <button class="btn btn-primary" onclick="uploadDDT()">Salva DDT</button>
-      <button class="btn btn-light" onclick="closeDdt()">Chiudi</button>
-
-      <div id="ddtMsg" class="msg info hidden"></div>
     </div>
 
     <div id="progressOverlay" class="overlay hidden">
