@@ -61,6 +61,7 @@ button{
 .btn-primary{ background:#1f4e78; }
 .btn-success{ background:#1f8f53; }
 .btn-danger{ background:#c83b2d; }
+.btn-warning{ background:#cc7a00; }
 .btn-light{
   background:#eaf2f9;
   color:#1f4e78;
@@ -101,6 +102,16 @@ button{
   border:1px solid #d0d7de;
   border-radius:14px;
   overflow:hidden;
+  background:#fff;
+}
+
+.preview{
+  width:100%;
+  margin-top:12px;
+  border-radius:14px;
+  border:1px solid #d0d7de;
+  object-fit:contain;
+  max-height:320px;
   background:#fff;
 }
 
