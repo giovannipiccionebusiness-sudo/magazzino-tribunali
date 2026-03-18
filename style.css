@@ -105,16 +105,6 @@ button{
   background:#fff;
 }
 
-.preview{
-  width:100%;
-  margin-top:12px;
-  border-radius:14px;
-  border:1px solid #d0d7de;
-  object-fit:contain;
-  max-height:320px;
-  background:#fff;
-}
-
 .hidden{
   display:none !important;
 }
