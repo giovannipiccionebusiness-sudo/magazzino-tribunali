@@ -1,111 +1,367 @@
-const API = "https://script.google.com/macros/s/AKfycbw3-SdPRd9CR_RKDz80U4pKKoSmoakyosRMHs92nl80KaN6p1QbZQwmBiot8Tvv8dxd/exec";
+const API_URL = "INCOLLA_QUI_URL_WEBAPP_APPS_SCRIPT";
 
-let scanner;
-
-function startScanner(){
-
-scanner = new Html5Qrcode("reader");
-
-scanner.start(
-{ facingMode:"environment" },
-
-{
-fps:10,
-qrbox:250
-},
-
-(decodedText)=>{
-
-document.getElementById("barcode").value = decodedText;
-
-scanner.stop();
-
-}
-
-);
-
-}
-
-async function verifica(){
-
-const codice = document.getElementById("barcode").value;
-
-const res = await fetch(API,{
-method:"POST",
-body:JSON.stringify({
-
-action:"verifica",
-barcode:codice
-
-})
-
-});
-
-const data = await res.json();
-
-alert(JSON.stringify(data));
-
-}
-
-async function carica(){
-
-movimento("CARICO");
-
-}
-
-async function scarica(){
-
-movimento("SCARICO");
-
-}
-
-async function movimento(tipo){
-
-const codice=document.getElementById("barcode").value;
-const qta=document.getElementById("qta").value;
-const sede=document.getElementById("sede").value;
-
-await fetch(API,{
-method:"POST",
-body:JSON.stringify({
-
-action:"movimento",
-barcode:codice,
-qta:qta,
-tipo:tipo,
-sede:sede
-
-})
-
-});
-
-alert("Movimento salvato");
-
-}
-
-async function caricaDDT(){
-
-const file=document.getElementById("ddt").files[0];
-
-const reader=new FileReader();
-
-reader.onload=async function(){
-
-await fetch(API,{
-method:"POST",
-body:JSON.stringify({
-
-action:"ddt",
-file:reader.result
-
-})
-
-});
-
-alert("DDT caricato");
-
+let APP = {
+  user: null,
+  actionType: null,
+  scanner: null,
+  scannerRunning: false,
+  progressTimer: null
 };
 
-reader.readAsDataURL(file);
+function $(id){ return document.getElementById(id); }
 
+function show(id){ $(id).classList.remove("hidden"); }
+function hide(id){ $(id).classList.add("hidden"); }
+
+function setMsg(id, text, cls){
+  const el = $(id);
+  el.className = "msg " + cls;
+  el.innerHTML = text;
+  el.classList.remove("hidden");
 }
+
+function startProgress(title, text){
+  $("progressTitle").textContent = title || "Operazione in corso…";
+  $("progressText").textContent = text || "Attendere qualche secondo…";
+  $("progressBar").style.width = "12%";
+  show("progressOverlay");
+
+  let p = 12;
+  clearInterval(APP.progressTimer);
+  APP.progressTimer = setInterval(() => {
+    if (p < 86) {
+      p += Math.random() * 12;
+      if (p > 86) p = 86;
+      $("progressBar").style.width = p + "%";
+    }
+  }, 350);
+}
+
+function stopProgress(finalText){
+  clearInterval(APP.progressTimer);
+  $("progressBar").style.width = "100%";
+  if (finalText) $("progressText").textContent = finalText;
+  setTimeout(() => {
+    hide("progressOverlay");
+    $("progressBar").style.width = "0%";
+  }, 350);
+}
+
+function saveLoginSession(user){
+  localStorage.setItem("magazzino_user", JSON.stringify(user));
+}
+
+function loadLoginSession(){
+  try {
+    const raw = localStorage.getItem("magazzino_user");
+    return raw ? JSON.parse(raw) : null;
+  } catch(e){
+    return null;
+  }
+}
+
+function clearLoginSession(){
+  localStorage.removeItem("magazzino_user");
+}
+
+function restoreSessionIfAvailable(){
+  const saved = loadLoginSession();
+  if (!saved) return false;
+
+  APP.user = saved;
+  $("chipOperatore").textContent = "Operatore: " + (saved.nome || "--");
+  $("chipRuolo").textContent = "Ruolo: " + (saved.role || "--");
+  loadSedi(saved.sediDisponibili || []);
+
+  hide("loginCard");
+  show("appCard");
+  setMsg("mainMsg", "Sessione ripristinata.", "ok");
+  return true;
+}
+
+function jsonpRequest(params){
+  return new Promise((resolve, reject) => {
+    const callbackName = "jsonp_cb_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
+    params.callback = callbackName;
+
+    const query = new URLSearchParams(params).toString();
+    const script = document.createElement("script");
+    script.src = API_URL + "?" + query;
+
+    let finished = false;
+    const cleanup = () => {
+      if (script.parentNode) script.parentNode.removeChild(script);
+      delete window[callbackName];
+    };
+
+    window[callbackName] = function(data){
+      finished = true;
+      cleanup();
+      resolve(data);
+    };
+
+    script.onerror = function(){
+      if (!finished) {
+        cleanup();
+        reject(new Error("Errore di comunicazione con Apps Script"));
+      }
+    };
+
+    document.body.appendChild(script);
+
+    setTimeout(() => {
+      if (!finished) {
+        cleanup();
+        reject(new Error("Timeout di comunicazione con Apps Script"));
+      }
+    }, 15000);
+  });
+}
+
+async function initApp(){
+  try {
+    startProgress("Avvio app", "Caricamento operatori…");
+
+    const data = await jsonpRequest({ action: "init" });
+
+    const sel = $("operatoreSelect");
+    sel.innerHTML = '<option value="">Seleziona operatore</option>';
+
+    (data.operatori || []).forEach(op => {
+      const opt = document.createElement("option");
+      opt.value = op.id;
+      opt.textContent = op.nome + (op.sedeAssegnata ? " - " + op.sedeAssegnata : "");
+      sel.appendChild(opt);
+    });
+
+    restoreSessionIfAvailable();
+    stopProgress("Operatori caricati");
+  } catch (err) {
+    stopProgress();
+    setMsg("loginMsg", err.message, "err");
+  }
+}
+
+async function doLogin(){
+  const operatoreId = $("operatoreSelect").value;
+  const pin = $("pinOperatore").value.trim();
+
+  if (!operatoreId) {
+    setMsg("loginMsg", "Seleziona un operatore.", "err");
+    return;
+  }
+  if (!pin) {
+    setMsg("loginMsg", "Inserisci il PIN.", "err");
+    return;
+  }
+
+  try {
+    startProgress("Accesso", "Verifica credenziali…");
+
+    const data = await jsonpRequest({
+      action: "login",
+      operatoreId: operatoreId,
+      pin: pin
+    });
+
+    if (!data.ok) throw new Error(data.error || "Login non riuscito");
+
+    APP.user = data;
+    saveLoginSession(data);
+
+    $("chipOperatore").textContent = "Operatore: " + (data.nome || "--");
+    $("chipRuolo").textContent = "Ruolo: " + (data.role || "--");
+
+    loadSedi(data.sediDisponibili || []);
+    hide("loginCard");
+    show("appCard");
+
+    setMsg("mainMsg", "Accesso effettuato correttamente.", "ok");
+    stopProgress("Accesso completato");
+  } catch (err) {
+    stopProgress();
+    setMsg("loginMsg", err.message, "err");
+  }
+}
+
+function logoutApp(){
+  stopScanner();
+  clearLoginSession();
+  APP.user = null;
+  show("loginCard");
+  hide("appCard");
+  hide("movementCard");
+  $("pinOperatore").value = "";
+  setMsg("loginMsg", "Sessione chiusa.", "info");
+}
+
+function loadSedi(sedi){
+  const sel = $("sede");
+  sel.innerHTML = "";
+  sedi.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = s;
+    sel.appendChild(opt);
+  });
+}
+
+function openAction(tipo){
+  stopScanner();
+  APP.actionType = tipo;
+  $("movementTitle").textContent = tipo === "CARICO" ? "Carica Prodotto" : "Scarica Prodotto";
+  $("barcode").value = "";
+  $("qty").value = 1;
+  $("noteMov").value = "";
+  hide("productMsg");
+  hide("reader");
+  show("movementCard");
+}
+
+function closeMovement(){
+  stopScanner();
+  hide("movementCard");
+}
+
+function startScanner(){
+  const readerId = "reader";
+  show(readerId);
+
+  if (APP.scannerRunning) return;
+
+  APP.scanner = new Html5Qrcode(readerId);
+
+  Html5Qrcode.getCameras().then(cameras => {
+    if (!cameras || !cameras.length) {
+      setMsg("productMsg", "Nessuna fotocamera disponibile.", "err");
+      return;
+    }
+
+    APP.scanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      decodedText => {
+        $("barcode").value = decodedText;
+        setMsg("productMsg", "Codice rilevato: <b>" + decodedText + "</b>", "ok");
+        stopScanner();
+      },
+      () => {}
+    ).then(() => {
+      APP.scannerRunning = true;
+      setMsg("productMsg", "Scanner attivo. Inquadra il QR del prodotto.", "info");
+    }).catch(err => {
+      setMsg("productMsg", "Errore fotocamera: " + err, "err");
+    });
+  }).catch(err => {
+    setMsg("productMsg", "Errore fotocamera: " + err, "err");
+  });
+}
+
+function stopScanner(){
+  if (APP.scanner && APP.scannerRunning) {
+    APP.scanner.stop().then(() => {
+      APP.scannerRunning = false;
+      hide("reader");
+    }).catch(() => {
+      APP.scannerRunning = false;
+      hide("reader");
+    });
+  } else {
+    APP.scannerRunning = false;
+    hide("reader");
+  }
+}
+
+async function lookupProduct(){
+  const sede = $("sede").value;
+  const barcode = $("barcode").value.trim();
+
+  if (!barcode) {
+    setMsg("productMsg", "Inserisci il codice.", "err");
+    return;
+  }
+
+  try {
+    startProgress("Verifica prodotto", "Ricerca del prodotto in magazzino…");
+
+    const res = await jsonpRequest({
+      action: "verificaProdotto",
+      sede: sede,
+      barcode: barcode,
+      operatoreId: APP.user.operatoreId
+    });
+
+    stopProgress("Prodotto verificato");
+
+    if (!res.found) {
+      setMsg("productMsg", "Prodotto non presente in questa sede.", "warn");
+      return;
+    }
+
+    setMsg(
+      "productMsg",
+      "<b>Prodotto:</b> " + res.product.prodotto + "<br>" +
+      "<b>Codice:</b> " + res.product.barcode + "<br>" +
+      "<b>Unità:</b> " + (res.product.unita || "-") + "<br>" +
+      "<b>Giacenza:</b> " + res.product.giacenza + "<br>" +
+      "<b>Scorta minima:</b> " + res.product.scortaMinima,
+      "ok"
+    );
+  } catch (err) {
+    stopProgress();
+    setMsg("productMsg", err.message, "err");
+  }
+}
+
+async function saveMovement(){
+  const sede = $("sede").value;
+  const barcode = $("barcode").value.trim();
+  const qta = Number($("qty").value || 0);
+  const note = $("noteMov").value.trim();
+
+  if (!barcode) {
+    setMsg("mainMsg", "Codice mancante.", "err");
+    return;
+  }
+  if (!qta || qta <= 0) {
+    setMsg("mainMsg", "Quantità non valida.", "err");
+    return;
+  }
+
+  try {
+    startProgress("Salvataggio movimento", "Aggiornamento giacenza e storico…");
+
+    const res = await jsonpRequest({
+      action: "movimento",
+      sede: sede,
+      barcode: barcode,
+      qta: qta,
+      tipo: APP.actionType,
+      note: note,
+      operatoreId: APP.user.operatoreId
+    });
+
+    if (!res.ok) throw new Error(res.error || "Movimento non salvato");
+
+    stopProgress("Movimento salvato");
+
+    let msg =
+      "Movimento registrato.<br>" +
+      "<b>Prodotto:</b> " + res.prodotto + "<br>" +
+      "<b>Giacenza precedente:</b> " + res.giacenzaPrecedente + "<br>" +
+      "<b>Nuova giacenza:</b> " + res.giacenzaNuova;
+
+    if (res.sottoScorta) {
+      setMsg("mainMsg", msg + "<br><b>Attenzione:</b> sotto scorta minima.", "warn");
+    } else {
+      setMsg("mainMsg", msg, "ok");
+    }
+
+    closeMovement();
+  } catch (err) {
+    stopProgress();
+    setMsg("mainMsg", err.message, "err");
+  }
+}
+
+window.onload = initApp;
