@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzEaEezCdRAKbz0dEUN8TpWDhLl7CVkPJe-74FL7debc6rdPujwTrkrVJpU8gSVc0WL/exec";
+const API_URL = "INCOLLA_QUI_URL_WEBAPP_APPS_SCRIPT";
 
 let APP = {
   user: null,
@@ -250,7 +250,17 @@ function startScanner(){
 
   if (APP.scannerRunning) return;
 
-  APP.scanner = new Html5Qrcode(readerId);
+  APP.scanner = new Html5Qrcode(readerId, {
+    formatsToSupport: [
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.ITF
+    ]
+  });
 
   Html5Qrcode.getCameras().then(cameras => {
     if (!cameras || !cameras.length) {
@@ -260,18 +270,23 @@ function startScanner(){
 
     APP.scanner.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
+      {
+        fps: 12,
+        qrbox: { width: 280, height: 140 },
+        aspectRatio: 1.7778
+      },
       decodedText => {
         $("barcode").value = decodedText;
-        setMsg("productMsg", "Codice rilevato: <b>" + decodedText + "</b>", "ok");
+        setMsg("productMsg", "Codice a barre rilevato: <b>" + decodedText + "</b>", "ok");
         stopScanner();
+        // lookupProduct(); // attiva questa riga se vuoi verifica automatica
       },
       () => {}
     ).then(() => {
       APP.scannerRunning = true;
-      setMsg("productMsg", "Scanner attivo. Inquadra il QR del prodotto.", "info");
+      setMsg("productMsg", "Scanner attivo. Inquadra il codice a barre del prodotto.", "info");
     }).catch(err => {
-      setMsg("productMsg", "Errore fotocamera: " + err, "err");
+      setMsg("productMsg", "Errore fotocamera/scanner: " + err, "err");
     });
   }).catch(err => {
     setMsg("productMsg", "Errore fotocamera: " + err, "err");
@@ -283,6 +298,7 @@ function stopScanner(){
     APP.scanner.stop().then(() => {
       APP.scannerRunning = false;
       hide("reader");
+      APP.scanner.clear();
     }).catch(() => {
       APP.scannerRunning = false;
       hide("reader");
