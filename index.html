@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Magazzino Tribunali</title>
+  <title>Magazzini Dussmann</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
   <div class="wrap">
+
     <div class="card" id="loginCard">
-      <h1>Magazzino Tribunali</h1>
+      <h1>Magazzini Dussmann</h1>
       <p class="sub">Accesso operatore con PIN</p>
 
       <label for="operatoreSelect">Operatore</label>
@@ -26,7 +27,7 @@
     </div>
 
     <div class="card hidden" id="appCard">
-      <h1>Magazzino Tribunali</h1>
+      <h1>Magazzini Dussmann</h1>
 
       <div class="chips">
         <span class="chip" id="chipOperatore">Operatore: --</span>
@@ -41,7 +42,7 @@
       <button class="btn btn-warning" onclick="openDdtModal()">Carica DDT</button>
       <button class="btn btn-light" onclick="logoutApp()">Cambia operatore</button>
 
-      <div id="mainMsg" class="msg info">Seleziona la sede e scegli l'operazione.</div>
+      <div id="mainMsg" class="msg info">Seleziona la sede e scegli l’operazione.</div>
     </div>
 
     <div class="card hidden" id="movementCard">
@@ -66,7 +67,6 @@
       <button class="btn btn-light" onclick="closeMovement()">Chiudi</button>
     </div>
 
-    <!-- MODALE DDT -->
     <div id="ddtModal" class="modal hidden">
       <div class="modal-card">
         <div class="modal-head">
@@ -102,6 +102,7 @@
         <div id="progressText" class="progress-text">Attendere qualche secondo…</div>
       </div>
     </div>
+
   </div>
 
   <script src="app.js"></script>
