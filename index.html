@@ -3,659 +3,107 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Magazzini Dussmann</title>
+  <title>Magazzino Tribunali</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <style>
-    body{
-      font-family: Arial, sans-serif;
-      background:#f4f7fb;
-      margin:0;
-      padding:20px;
-    }
-    .card{
-      background:#fff;
-      border-radius:16px;
-      padding:20px;
-      max-width:520px;
-      margin:auto;
-      margin-bottom:14px;
-      box-shadow:0 4px 18px rgba(0,0,0,.08);
-    }
-    h1,h3{
-      margin-top:0;
-      color:#1f4e78;
-    }
-    label{
-      display:block;
-      margin:10px 0 6px;
-      font-weight:bold;
-    }
-    select,input,button,textarea{
-      width:100%;
-      padding:14px;
-      font-size:16px;
-      border-radius:12px;
-      border:1px solid #d0d7de;
-      box-sizing:border-box;
-    }
-    button{
-      border:none;
-      color:#fff;
-      font-weight:bold;
-      cursor:pointer;
-      margin-top:12px;
-    }
-    .btn-primary{ background:#1f4e78; }
-    .btn-success{ background:#198754; }
-    .btn-danger{ background:#c0392b; }
-    .btn-warning{ background:#cc7a00; }
-    .btn-light{
-      background:#eef5fb;
-      color:#1f4e78;
-      border:1px solid #d0d7de;
-    }
-    .hide{ display:none !important; }
-    .msg{
-      margin-top:12px;
-      padding:12px;
-      border-radius:12px;
-      font-size:14px;
-      line-height:1.4;
-    }
-    .info{ background:#e9f3ff; }
-    .ok{ background:#dff5e4; }
-    .err{ background:#fde5e5; }
-    .warn{ background:#fff4dc; }
-    .chip{
-      display:inline-block;
-      background:#eef5fb;
-      color:#1f4e78;
-      padding:8px 12px;
-      border-radius:999px;
-      margin-right:8px;
-      margin-bottom:8px;
-      font-weight:bold;
-      font-size:13px;
-    }
-    .preview{
-      width:100%;
-      margin-top:10px;
-      border-radius:12px;
-      border:1px solid #d0d7de;
-      object-fit:contain;
-      max-height:280px;
-      background:#fff;
-    }
-    .overlay{
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.35);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:9999;
-      padding:20px;
-    }
-    .overlay-box{
-      width:100%;
-      max-width:380px;
-      background:#fff;
-      border-radius:16px;
-      padding:18px;
-      box-shadow:0 8px 28px rgba(0,0,0,.18);
-      text-align:center;
-    }
-    .spinner{
-      width:42px;
-      height:42px;
-      border:4px solid #d9e7f5;
-      border-top:4px solid #1f4e78;
-      border-radius:50%;
-      animation:spin 1s linear infinite;
-      margin:0 auto 14px;
-    }
-    .progress-wrap{
-      width:100%;
-      background:#eef3f8;
-      border-radius:999px;
-      height:12px;
-      overflow:hidden;
-      margin-top:12px;
-    }
-    .progress-bar{
-      height:100%;
-      width:0%;
-      background:#1f4e78;
-      transition:width .25s ease;
-    }
-    .small{
-      font-size:12px;
-      color:#637381;
-      margin-top:8px;
-    }
-    #qr-reader{
-      width:100%;
-      margin-top:12px;
-      border-radius:12px;
-      overflow:hidden;
-      border:1px solid #d0d7de;
-      background:#fff;
-    }
-    @keyframes spin{
-      0%{transform:rotate(0deg)}
-      100%{transform:rotate(360deg)}
-    }
-  </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="card" id="loginCard">
+      <h1>Magazzino Tribunali</h1>
+      <p class="sub">Accesso operatore con PIN</p>
 
-  <div class="card" id="loginCard">
-    <h1>Magazzini Dussmann</h1>
+      <label for="operatoreSelect">Operatore</label>
+      <select id="operatoreSelect">
+        <option value="">Seleziona operatore</option>
+      </select>
 
-    <label for="operatoreSelect">Operatore</label>
-    <select id="operatoreSelect">
-      <option value="">Seleziona operatore</option>
-    </select>
+      <label for="pinOperatore">PIN operatore</label>
+      <input id="pinOperatore" type="password" placeholder="Inserisci PIN" />
 
-    <label for="pinOperatore">PIN operatore</label>
-    <input id="pinOperatore" type="password" placeholder="Inserisci PIN" />
-
-    <button class="btn-primary" onclick="doLogin()">Entra</button>
-    <div id="loginMsg" class="msg info">Seleziona il tuo nome e inserisci il PIN.</div>
-  </div>
-
-  <div class="card hide" id="appCard">
-    <h1>Magazzini Dussmann</h1>
-
-    <div>
-      <span class="chip" id="chipOperatore">Operatore: --</span>
-      <span class="chip" id="chipRuolo">Ruolo: --</span>
+      <button class="btn btn-primary" onclick="doLogin()">Entra</button>
+      <div id="loginMsg" class="msg info">Seleziona il tuo nome e inserisci il PIN.</div>
     </div>
 
-    <label for="sede">Sede</label>
-    <select id="sede"></select>
+    <div class="card hidden" id="appCard">
+      <h1>Magazzino Tribunali</h1>
 
-    <button class="btn-success" onclick="openAction('CARICO')">Carica Prodotto</button>
-    <button class="btn-danger" onclick="openAction('SCARICO')">Scarica Prodotto</button>
-    <button class="btn-warning" onclick="openDdt()">Carica DDT</button>
-    <button class="btn-light" onclick="logoutApp()">Cambia operatore</button>
-
-    <div id="mainMsg" class="msg info">Seleziona la sede e premi uno dei tre pulsanti.</div>
-  </div>
-
-  <div class="card hide" id="movementCard">
-    <h3 id="movementTitle">Movimento prodotto</h3>
-
-    <label for="barcode">Codice prodotto</label>
-    <input id="barcode" placeholder="Digita il codice oppure scansiona il QR" inputmode="numeric" />
-
-    <button class="btn-light" onclick="startScanner()">Scansiona QR prodotto</button>
-    <div id="qr-reader" class="hide"></div>
-
-    <button class="btn-light" onclick="lookupProduct()">Verifica prodotto</button>
-
-    <div id="productMsg" class="msg info hide"></div>
-
-    <label for="qty">Quantità</label>
-    <input id="qty" type="number" min="1" value="1" />
-
-    <label for="noteMov">Nota</label>
-    <textarea id="noteMov" placeholder="Nota facoltativa"></textarea>
-
-    <button class="btn-primary" onclick="saveMovement()">Conferma movimento</button>
-    <button class="btn-light" onclick="closeMovement()">Chiudi</button>
-  </div>
-
-  <div class="card hide" id="ddtCard">
-    <h3>Carica DDT</h3>
-
-    <label for="ddtFile">Foto DDT</label>
-    <input id="ddtFile" type="file" accept="image/*" capture="environment" onchange="previewDdt(this)" />
-
-    <img id="ddtPreview" class="preview hide" alt="Anteprima DDT" />
-
-    <label for="ddtNote">Nota</label>
-    <textarea id="ddtNote" placeholder="Numero bolla o note"></textarea>
-
-    <button class="btn-primary" onclick="saveDdt()">Salva DDT</button>
-    <button class="btn-light" onclick="closeDdt()">Chiudi</button>
-  </div>
-
-  <div id="progressOverlay" class="overlay hide">
-    <div class="overlay-box">
-      <div class="spinner"></div>
-      <div id="progressTitle" style="font-weight:bold;font-size:18px;">Operazione in corso…</div>
-      <div class="progress-wrap">
-        <div id="progressBar" class="progress-bar"></div>
+      <div class="chips">
+        <span class="chip" id="chipOperatore">Operatore: --</span>
+        <span class="chip" id="chipRuolo">Ruolo: --</span>
       </div>
-      <div id="progressText" class="small">Attendere qualche secondo…</div>
+
+      <label for="sede">Sede</label>
+      <select id="sede"></select>
+
+      <button class="btn btn-success" onclick="openAction('CARICO')">Carica Prodotto</button>
+      <button class="btn btn-danger" onclick="openAction('SCARICO')">Scarica Prodotto</button>
+      <button class="btn btn-warning" onclick="openDdtModal()">Carica DDT</button>
+      <button class="btn btn-light" onclick="logoutApp()">Cambia operatore</button>
+
+      <div id="mainMsg" class="msg info">Seleziona la sede e scegli l'operazione.</div>
+    </div>
+
+    <div class="card hidden" id="movementCard">
+      <h2 id="movementTitle">Movimento prodotto</h2>
+
+      <label for="barcode">Codice prodotto</label>
+      <input id="barcode" placeholder="Digita il codice oppure scansiona il barcode" inputmode="numeric" />
+
+      <button class="btn btn-light" onclick="startScanner()">Scansiona barcode prodotto</button>
+      <div id="reader" class="reader hidden"></div>
+
+      <button class="btn btn-light" onclick="lookupProduct()">Verifica prodotto</button>
+      <div id="productMsg" class="msg info hidden"></div>
+
+      <label for="qty">Quantità</label>
+      <input id="qty" type="number" min="1" value="1" />
+
+      <label for="noteMov">Nota</label>
+      <textarea id="noteMov" placeholder="Nota facoltativa"></textarea>
+
+      <button class="btn btn-primary" onclick="saveMovement()">Conferma movimento</button>
+      <button class="btn btn-light" onclick="closeMovement()">Chiudi</button>
+    </div>
+
+    <!-- MODALE DDT -->
+    <div id="ddtModal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h2>Carica DDT</h2>
+          <button class="modal-close" onclick="closeDdtModal()">×</button>
+        </div>
+
+        <div class="meta-box" id="ddtOperatoreBox">Operatore: --</div>
+        <div class="meta-box" id="ddtSedeBox">Sede: --</div>
+
+        <label for="ddtFile">Foto DDT</label>
+        <input id="ddtFile" type="file" accept="image/*" capture="environment" onchange="previewDdt(this)" />
+
+        <img id="ddtPreview" class="preview hidden" alt="Anteprima DDT" />
+
+        <label for="ddtNote">Note</label>
+        <textarea id="ddtNote" placeholder="Numero bolla o note"></textarea>
+
+        <button class="btn btn-primary" onclick="saveDdt()">Salva DDT</button>
+        <button class="btn btn-light" onclick="closeDdtModal()">Chiudi</button>
+
+        <div id="ddtMsg" class="msg info hidden"></div>
+      </div>
+    </div>
+
+    <div id="progressOverlay" class="overlay hidden">
+      <div class="overlay-box">
+        <div class="spinner"></div>
+        <div id="progressTitle" class="progress-title">Operazione in corso…</div>
+        <div class="progress-wrap">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+        <div id="progressText" class="progress-text">Attendere qualche secondo…</div>
+      </div>
     </div>
   </div>
 
-<script>
-  let APP = {
-    user: null,
-    operatori: [],
-    actionType: null,
-    currentProduct: null,
-    progressTimer: null,
-    qrScanner: null,
-    scannerRunning: false
-  };
-
-  function $(id){ return document.getElementById(id); }
-
-  function setMsg(id, text, cls){
-    const el = $(id);
-    el.className = 'msg ' + cls;
-    el.innerHTML = text;
-    el.classList.remove('hide');
-  }
-
-  function hide(id){ $(id).classList.add('hide'); }
-  function show(id){ $(id).classList.remove('hide'); }
-
-  function startProgress(title, text){
-    $('progressTitle').textContent = title || 'Operazione in corso…';
-    $('progressText').textContent = text || 'Attendere qualche secondo…';
-    $('progressBar').style.width = '12%';
-    show('progressOverlay');
-
-    let p = 12;
-    clearInterval(APP.progressTimer);
-    APP.progressTimer = setInterval(() => {
-      if (p < 86) {
-        p += Math.random() * 12;
-        if (p > 86) p = 86;
-        $('progressBar').style.width = p + '%';
-      }
-    }, 350);
-  }
-
-  function stopProgress(finalText){
-    clearInterval(APP.progressTimer);
-    $('progressBar').style.width = '100%';
-    if (finalText) $('progressText').textContent = finalText;
-    setTimeout(() => {
-      hide('progressOverlay');
-      $('progressBar').style.width = '0%';
-    }, 350);
-  }
-
-  function saveLoginSession(user) {
-    localStorage.setItem('magazzino_user', JSON.stringify(user));
-  }
-
-  function loadLoginSession() {
-    try {
-      const raw = localStorage.getItem('magazzino_user');
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function clearLoginSession() {
-    localStorage.removeItem('magazzino_user');
-  }
-
-  function restoreSessionIfAvailable() {
-    const saved = loadLoginSession();
-    if (!saved) return false;
-
-    APP.user = saved;
-    $('chipOperatore').textContent = 'Operatore: ' + (saved.nome || '--');
-    $('chipRuolo').textContent = 'Ruolo: ' + (saved.role || '--');
-    loadSedi(saved.sediDisponibili || []);
-
-    hide('loginCard');
-    show('appCard');
-    setMsg('mainMsg', 'Sessione ripristinata.', 'ok');
-    return true;
-  }
-
-  function initApp(){
-    startProgress('Avvio app', 'Caricamento operatori…');
-
-    google.script.run
-      .withSuccessHandler(function(data){
-        APP.operatori = data.operatori || [];
-        const sel = $('operatoreSelect');
-        sel.innerHTML = '<option value="">Seleziona operatore</option>';
-
-        APP.operatori.forEach(function(op){
-          const opt = document.createElement('option');
-          opt.value = op.id;
-          opt.textContent = op.nome + (op.sedeAssegnata ? ' - ' + op.sedeAssegnata : '');
-          sel.appendChild(opt);
-        });
-
-        restoreSessionIfAvailable();
-
-        if (!APP.operatori.length) {
-          setMsg('loginMsg', 'Nessun operatore attivo trovato nella tab UTENTI.', 'err');
-        }
-
-        stopProgress('Operatori caricati');
-      })
-      .withFailureHandler(function(err){
-        stopProgress();
-        setMsg('loginMsg', 'Errore caricamento operatori: ' + (err.message || err), 'err');
-      })
-      .getAppInitData();
-  }
-
-  function doLogin(){
-    const operatoreId = $('operatoreSelect').value;
-    const pin = $('pinOperatore').value.trim();
-
-    if (!operatoreId) {
-      setMsg('loginMsg', 'Seleziona un operatore.', 'err');
-      return;
-    }
-
-    if (!pin) {
-      setMsg('loginMsg', 'Inserisci il PIN.', 'err');
-      return;
-    }
-
-    startProgress('Accesso', 'Verifica credenziali…');
-
-    google.script.run
-      .withSuccessHandler(function(data){
-        APP.user = data;
-        saveLoginSession(data);
-
-        $('chipOperatore').textContent = 'Operatore: ' + (data.nome || '--');
-        $('chipRuolo').textContent = 'Ruolo: ' + (data.role || '--');
-
-        loadSedi(data.sediDisponibili || []);
-
-        hide('loginCard');
-        show('appCard');
-        setMsg('mainMsg', 'Accesso effettuato correttamente.', 'ok');
-        stopProgress('Accesso completato');
-      })
-      .withFailureHandler(function(err){
-        stopProgress();
-        setMsg('loginMsg', 'Login fallito: ' + (err.message || err), 'err');
-      })
-      .loginOperatore(operatoreId, pin);
-  }
-
-  function logoutApp(){
-    stopScanner();
-    clearLoginSession();
-    APP.user = null;
-    show('loginCard');
-    hide('appCard');
-    hide('movementCard');
-    hide('ddtCard');
-    $('pinOperatore').value = '';
-    setMsg('loginMsg', 'Sessione chiusa.', 'info');
-  }
-
-  function loadSedi(sedi){
-    const sel = $('sede');
-    sel.innerHTML = '';
-    sedi.forEach(function(s){
-      const opt = document.createElement('option');
-      opt.value = s;
-      opt.textContent = s;
-      sel.appendChild(opt);
-    });
-  }
-
-  function openAction(tipo){
-    stopScanner();
-    APP.actionType = tipo;
-    APP.currentProduct = null;
-    $('movementTitle').textContent = tipo === 'CARICO' ? 'Carica Prodotto' : 'Scarica Prodotto';
-    $('barcode').value = '';
-    $('qty').value = 1;
-    $('noteMov').value = '';
-    hide('qr-reader');
-    hide('productMsg');
-    show('movementCard');
-    hide('ddtCard');
-  }
-
-  function closeMovement(){
-    stopScanner();
-    hide('movementCard');
-  }
-
-  function openDdt(){
-    stopScanner();
-    hide('movementCard');
-    $('ddtFile').value = '';
-    $('ddtNote').value = '';
-    $('ddtPreview').src = '';
-    hide('ddtPreview');
-    show('ddtCard');
-  }
-
-  function closeDdt(){
-    hide('ddtCard');
-  }
-
-  function startScanner(){
-    const readerId = "qr-reader";
-    show(readerId);
-
-    if (APP.scannerRunning) return;
-
-    APP.qrScanner = new Html5Qrcode(readerId);
-
-    Html5Qrcode.getCameras().then(cameras => {
-      if (!cameras || !cameras.length) {
-        setMsg('productMsg', 'Nessuna fotocamera disponibile.', 'err');
-        return;
-      }
-
-      APP.qrScanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (decodedText) => {
-          $('barcode').value = decodedText;
-          setMsg('productMsg', 'QR rilevato: <b>' + decodedText + '</b>', 'ok');
-          stopScanner();
-        },
-        () => {}
-      ).then(() => {
-        APP.scannerRunning = true;
-        setMsg('productMsg', 'Scanner attivo. Inquadra il QR del prodotto.', 'info');
-      }).catch(err => {
-        setMsg('productMsg', 'Errore apertura scanner: ' + err, 'err');
-      });
-    }).catch(err => {
-      setMsg('productMsg', 'Errore fotocamera: ' + err, 'err');
-    });
-  }
-
-  function stopScanner(){
-    if (APP.qrScanner && APP.scannerRunning) {
-      APP.qrScanner.stop().then(() => {
-        APP.scannerRunning = false;
-        hide('qr-reader');
-      }).catch(() => {
-        APP.scannerRunning = false;
-        hide('qr-reader');
-      });
-    } else {
-      APP.scannerRunning = false;
-      hide('qr-reader');
-    }
-  }
-
-  function lookupProduct(){
-    const sede = $('sede').value;
-    const barcode = $('barcode').value.trim();
-
-    if (!barcode) {
-      setMsg('productMsg', 'Inserisci il codice.', 'err');
-      return;
-    }
-
-    if (!APP.user || !APP.user.operatoreId) {
-      setMsg('mainMsg', 'Sessione non valida. Effettua di nuovo l’accesso.', 'err');
-      show('loginCard');
-      hide('appCard');
-      return;
-    }
-
-    startProgress('Verifica prodotto', 'Ricerca del prodotto in magazzino…');
-
-    google.script.run
-      .withSuccessHandler(function(res){
-        stopProgress('Prodotto verificato');
-
-        if (!res.found) {
-          APP.currentProduct = null;
-          setMsg('productMsg', 'Prodotto non presente in questa sede.', 'warn');
-          return;
-        }
-
-        APP.currentProduct = res.product;
-        setMsg(
-          'productMsg',
-          '<b>Prodotto:</b> ' + res.product.prodotto + '<br>' +
-          '<b>Codice:</b> ' + res.product.barcode + '<br>' +
-          '<b>Unità:</b> ' + (res.product.unita || '-') + '<br>' +
-          '<b>Giacenza:</b> ' + res.product.giacenza + '<br>' +
-          '<b>Scorta minima:</b> ' + res.product.scortaMinima,
-          'ok'
-        );
-      })
-      .withFailureHandler(function(err){
-        stopProgress();
-        setMsg('productMsg', 'Errore verifica prodotto: ' + (err.message || err), 'err');
-      })
-      .scanProduct({
-        sede: sede,
-        barcode: barcode,
-        operatoreId: APP.user.operatoreId
-      });
-  }
-
-  function saveMovement(){
-    const sede = $('sede').value;
-    const barcode = $('barcode').value.trim();
-    const qta = Number($('qty').value || 0);
-    const note = $('noteMov').value.trim();
-
-    if (!APP.user || !APP.user.operatoreId) {
-      setMsg('mainMsg', 'Sessione non valida. Effettua di nuovo l’accesso.', 'err');
-      show('loginCard');
-      hide('appCard');
-      return;
-    }
-
-    if (!barcode) {
-      setMsg('mainMsg', 'Codice mancante.', 'err');
-      return;
-    }
-
-    if (!qta || qta <= 0) {
-      setMsg('mainMsg', 'Quantità non valida.', 'err');
-      return;
-    }
-
-    startProgress('Salvataggio movimento', 'Aggiornamento giacenza e storico…');
-
-    google.script.run
-      .withSuccessHandler(function(res){
-        stopProgress('Movimento salvato');
-
-        let msg =
-          'Movimento registrato.<br>' +
-          '<b>Prodotto:</b> ' + res.prodotto + '<br>' +
-          '<b>Giacenza precedente:</b> ' + res.giacenzaPrecedente + '<br>' +
-          '<b>Nuova giacenza:</b> ' + res.giacenzaNuova;
-
-        if (res.sottoScorta) {
-          setMsg('mainMsg', msg + '<br><b>Attenzione:</b> sotto scorta minima.', 'warn');
-        } else {
-          setMsg('mainMsg', msg, 'ok');
-        }
-
-        closeMovement();
-      })
-      .withFailureHandler(function(err){
-        stopProgress();
-        setMsg('mainMsg', 'Errore salvataggio movimento: ' + (err.message || err), 'err');
-      })
-      .processMovement({
-        sede: sede,
-        barcode: barcode,
-        qta: qta,
-        tipo: APP.actionType,
-        note: note,
-        operatoreId: APP.user.operatoreId
-      });
-  }
-
-  function previewDdt(input){
-    const file = input.files && input.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e){
-      $('ddtPreview').src = e.target.result;
-      show('ddtPreview');
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function saveDdt(){
-    const sede = $('sede').value;
-    const file = $('ddtFile').files && $('ddtFile').files[0];
-    const note = $('ddtNote').value.trim();
-
-    if (!APP.user || !APP.user.operatoreId) {
-      setMsg('mainMsg', 'Sessione non valida. Effettua di nuovo l’accesso.', 'err');
-      show('loginCard');
-      hide('appCard');
-      return;
-    }
-
-    if (!file) {
-      setMsg('mainMsg', 'Seleziona una foto del DDT.', 'err');
-      return;
-    }
-
-    startProgress('Caricamento DDT', 'Upload immagine e registrazione nel foglio…');
-
-    const reader = new FileReader();
-    reader.onload = function(e){
-      google.script.run
-        .withSuccessHandler(function(res){
-          stopProgress('DDT caricato');
-          setMsg(
-            'mainMsg',
-            'DDT caricato correttamente.<br><b>File:</b> ' + res.fileName +
-            '<br><a href="' + res.url + '" target="_blank">Apri DDT</a>',
-            'ok'
-          );
-          closeDdt();
-        })
-        .withFailureHandler(function(err){
-          stopProgress();
-          setMsg('mainMsg', 'Errore caricamento DDT: ' + (err.message || err), 'err');
-        })
-        .uploadDdt({
-          sede: sede,
-          dataUrl: e.target.result,
-          fileName: file.name,
-          mimeType: file.type || 'image/jpeg',
-          note: note,
-          operatoreId: APP.user.operatoreId
-        });
-    };
-    reader.readAsDataURL(file);
-  }
-
-  window.onload = initApp;
-</script>
+  <script src="app.js"></script>
 </body>
 </html>
