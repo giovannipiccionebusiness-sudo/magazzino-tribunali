@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzq-FM1LD5cxEbI4lUWwZiQW6PicpGG89Q3Pts_nKL5vXEFTT1ek_waY4wofweeYeZP/exec";
+const API_URL = "INCOLLA_QUI_URL_WEBAPP_APPS_SCRIPT";
 
 let APP = {
   user: null,
@@ -191,6 +191,7 @@ function logoutApp(){
   show("loginCard");
   hide("appCard");
   hide("movementCard");
+  hide("ddtModal");
   $("pinOperatore").value = "";
   setMsg("loginMsg", "Sessione chiusa.", "info");
 }
@@ -215,6 +216,7 @@ function openAction(tipo){
   $("noteMov").value = "";
   hide("productMsg");
   hide("reader");
+  hide("ddtModal");
   show("movementCard");
 }
 
@@ -223,7 +225,7 @@ function closeMovement(){
   hide("movementCard");
 }
 
-function openDdtPage(){
+function openDdtModal(){
   if (!APP.user || !APP.user.operatoreId) {
     setMsg("mainMsg", "Sessione non valida.", "err");
     return;
@@ -235,13 +237,120 @@ function openDdtPage(){
     return;
   }
 
-  const url =
-    API_URL +
-    "?page=ddt" +
-    "&operatoreId=" + encodeURIComponent(APP.user.operatoreId) +
-    "&sede=" + encodeURIComponent(sede);
+  $("ddtOperatoreBox").textContent = "Operatore: " + APP.user.nome;
+  $("ddtSedeBox").textContent = "Sede: " + sede;
+  $("ddtFile").value = "";
+  $("ddtNote").value = "";
+  $("ddtPreview").src = "";
+  hide("ddtPreview");
+  hide("ddtMsg");
 
-  window.open(url, "_blank");
+  show("ddtModal");
+}
+
+function closeDdtModal(){
+  hide("ddtModal");
+}
+
+function previewDdt(input){
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    $("ddtPreview").src = e.target.result;
+    show("ddtPreview");
+  };
+  reader.readAsDataURL(file);
+}
+
+function resizeImageToJpegBase64(file, maxWidth = 1400, quality = 0.78){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+      const img = new Image();
+      img.onload = function(){
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveDdt(){
+  const file = $("ddtFile").files && $("ddtFile").files[0];
+  const note = $("ddtNote").value.trim();
+  const sede = $("sede").value;
+
+  if (!APP.user || !APP.user.operatoreId) {
+    setMsg("ddtMsg", "Sessione non valida.", "err");
+    return;
+  }
+
+  if (!sede) {
+    setMsg("ddtMsg", "Sede non valida.", "err");
+    return;
+  }
+
+  if (!file) {
+    setMsg("ddtMsg", "Seleziona una foto del DDT.", "err");
+    return;
+  }
+
+  try {
+    startProgress("Preparazione DDT", "Compressione immagine in corso…");
+    const dataUrl = await resizeImageToJpegBase64(file);
+
+    startProgress("Salvataggio DDT", "Invio al backend…");
+
+    const res = await jsonpRequest({
+      action: "uploadDdt",
+      operatoreId: APP.user.operatoreId,
+      sede: sede,
+      note: note,
+      dataUrl: dataUrl,
+      fileName: file.name || "ddt.jpg"
+    });
+
+    if (!res.ok) throw new Error(res.error || "Errore salvataggio DDT");
+
+    stopProgress("DDT salvato");
+    setMsg(
+      "ddtMsg",
+      'DDT caricato correttamente.<br><a href="' + res.url + '" target="_blank">Apri file</a>',
+      "ok"
+    );
+
+    setTimeout(() => {
+      closeDdtModal();
+      setMsg("mainMsg", "DDT salvato correttamente.", "ok");
+    }, 1000);
+
+  } catch (err) {
+    stopProgress();
+    setMsg("ddtMsg", err.message, "err");
+  }
 }
 
 function startScanner(){
