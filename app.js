@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbycWKrF2CjuBGA9RXrb-KBz6WoNV3ER6N_ElnX-zpWIs6EUQN6JATUrLskhv0xpE3E/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyauI6Cswtrf4JxqWVU_zrgKgp-fuIgLflj8a9wdEfLwC1mq7WGbIOo0UEGT20kaq8T/exec";
 
 let APP = {
   user: null,
@@ -202,6 +202,7 @@ function logoutApp(){
   hide("appCard");
   hide("movementCard");
   hide("ddtModal");
+  hide("orderModal");
 
   $("pinOperatore").value = "";
   setMsg("loginMsg", "Sessione chiusa.", "info");
@@ -232,6 +233,7 @@ function openAction(tipo){
   hide("productMsg");
   hide("reader");
   hide("ddtModal");
+  hide("orderModal");
   show("movementCard");
 }
 
@@ -263,6 +265,8 @@ function openDdtModal(){
   hide("ddtPreview");
   hide("ddtMsg");
 
+  hide("movementCard");
+  hide("orderModal");
   show("ddtModal");
 }
 
@@ -580,6 +584,152 @@ async function saveMovement(){
   } catch (err) {
     stopProgress();
     setMsg("mainMsg", err.message, "err");
+  }
+}
+
+async function openOrderModal(){
+  if (!APP.user || !APP.user.operatoreId) {
+    setMsg("mainMsg", "Sessione non valida.", "err");
+    return;
+  }
+
+  const sede = $("sede").value;
+
+  if (!sede) {
+    setMsg("mainMsg", "Seleziona una sede.", "err");
+    return;
+  }
+
+  $("orderOperatoreBox").textContent = "Operatore: " + APP.user.nome;
+  $("orderSedeBox").textContent = "Sede: " + sede;
+  $("orderNote").value = "";
+  $("orderList").innerHTML = "";
+  hide("orderMsg");
+
+  hide("movementCard");
+  hide("ddtModal");
+  show("orderModal");
+
+  try {
+    startProgress("Caricamento prodotti", "Ricerca prodotti sotto scorta…");
+
+    const res = await jsonpRequest({
+      action: "getOrderProducts",
+      sede: sede,
+      operatoreId: APP.user.operatoreId
+    });
+
+    if (!res.ok) throw new Error(res.error || "Errore prodotti ordine");
+
+    stopProgress("Prodotti caricati");
+    renderOrderProducts(res.products || []);
+
+  } catch (err) {
+    stopProgress();
+    setMsg("orderMsg", err.message, "err");
+  }
+}
+
+function closeOrderModal(){
+  hide("orderModal");
+}
+
+function renderOrderProducts(products){
+  const box = $("orderList");
+  box.innerHTML = "";
+
+  if (!products.length) {
+    box.innerHTML = '<div class="msg ok">Nessun prodotto sotto scorta.</div>';
+    return;
+  }
+
+  products.forEach(p => {
+    const minQty = Math.max(0, Number(p.scortaMinima) - Number(p.giacenza));
+
+    const img = p.linkFoto
+      ? '<img class="order-img" src="' + p.linkFoto + '" alt="Foto prodotto">'
+      : '';
+
+    const html = `
+      <div class="order-item">
+        ${img}
+        <div class="order-title">${p.prodotto}</div>
+        <div class="order-small">
+          Codice: ${p.barcode}<br>
+          Giacenza: ${p.giacenza}<br>
+          Scorta minima: ${p.scortaMinima}<br>
+          Quantità minima da ordinare: ${minQty}
+        </div>
+
+        <label>Quantità ordine</label>
+        <input
+          type="number"
+          min="${minQty}"
+          value="${minQty}"
+          class="order-qty"
+          data-barcode="${p.barcode}"
+          data-prodotto="${p.prodotto}"
+          data-giacenza="${p.giacenza}"
+          data-scorta="${p.scortaMinima}">
+      </div>
+    `;
+
+    box.insertAdjacentHTML("beforeend", html);
+  });
+}
+
+async function saveOrder(){
+  const sede = $("sede").value;
+  const note = $("orderNote").value.trim();
+  const inputs = document.querySelectorAll(".order-qty");
+
+  const items = [];
+
+  inputs.forEach(input => {
+    const qta = Number(input.value || 0);
+    const min = Number(input.min || 0);
+
+    if (qta > 0) {
+      items.push({
+        barcode: input.dataset.barcode,
+        prodotto: input.dataset.prodotto,
+        giacenza: input.dataset.giacenza,
+        scortaMinima: input.dataset.scorta,
+        qtaOrdine: Math.max(qta, min)
+      });
+    }
+  });
+
+  if (!items.length) {
+    setMsg("orderMsg", "Nessun prodotto selezionato.", "err");
+    return;
+  }
+
+  try {
+    startProgress("Salvataggio ordine", "Registrazione ordine…");
+
+    const res = await jsonpRequest({
+      action: "saveOrder",
+      sede: sede,
+      operatoreId: APP.user.operatoreId,
+      note: note,
+      items: JSON.stringify(items)
+    });
+
+    if (!res.ok) throw new Error(res.error || "Errore salvataggio ordine");
+
+    stopProgress("Ordine salvato");
+
+    setMsg("orderMsg", "Ordine salvato correttamente.", "ok");
+
+    setTimeout(() => {
+      closeOrderModal();
+      setMsg("mainMsg", "Nuovo ordine salvato correttamente.", "ok");
+    }, 900);
+
+  } catch (err) {
+    stopProgress();
+    setMsg("orderMsg", err.message, "err");
   }
 }
 
