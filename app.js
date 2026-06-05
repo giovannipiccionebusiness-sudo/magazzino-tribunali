@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzqwAFHHkUbePs_TOIW7D7_D5kZGoYIKFPKOHGOP3dyEM1bh3PzcEr1yIbE4c2UET5v/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw4H9ou6sr0ni8Qx-a416OAWpS662mqK1GzV2h7eZciYEG-cEjGIvWTcglwFfxKpGmf/exec";
 
 let APP = {
   user: null,
@@ -203,6 +203,7 @@ function logoutApp(){
   hide("movementCard");
   hide("ddtModal");
   hide("orderModal");
+  hide("receiveModal");
 
   $("pinOperatore").value = "";
   setMsg("loginMsg", "Sessione chiusa.", "info");
@@ -234,6 +235,7 @@ function openAction(tipo){
   hide("reader");
   hide("ddtModal");
   hide("orderModal");
+  hide("receiveModal");
   show("movementCard");
 }
 
@@ -267,6 +269,7 @@ function openDdtModal(){
 
   hide("movementCard");
   hide("orderModal");
+  hide("receiveModal");
   show("ddtModal");
 }
 
@@ -524,7 +527,8 @@ async function lookupProduct(){
       "<b>Codice:</b> " + res.product.barcode + "<br>" +
       "<b>Unità:</b> " + (res.product.unita || "-") + "<br>" +
       "<b>Giacenza:</b> " + res.product.giacenza + "<br>" +
-      "<b>Scorta minima:</b> " + res.product.scortaMinima,
+      "<b>Scorta minima:</b> " + res.product.scortaMinima + "<br>" +
+      "<b>Fornitore:</b> " + (res.product.fornitore || "-"),
       "ok"
     );
 
@@ -608,6 +612,7 @@ async function openOrderModal(){
 
   hide("movementCard");
   hide("ddtModal");
+  hide("receiveModal");
   show("orderModal");
 
   try {
@@ -685,6 +690,7 @@ function renderOrderProducts(products){
         <div class="order-title">${p.prodotto}</div>
         <div class="order-small">
           Codice: ${p.barcode}<br>
+          Fornitore: ${p.fornitore || "-"}<br>
           Giacenza: ${p.giacenza}<br>
           Scorta minima: ${p.scortaMinima}<br>
           Ordine minimo fornitore: ${minOrdine}
@@ -700,7 +706,8 @@ function renderOrderProducts(products){
           data-giacenza="${p.giacenza}"
           data-scorta="${p.scortaMinima}"
           data-minordine="${minOrdine}"
-          data-multiplo="${multiploOrdine}">
+          data-multiplo="${multiploOrdine}"
+          data-fornitore="${p.fornitore || "SENZA FORNITORE"}">
           ${options}
         </select>
       </div>
@@ -712,7 +719,6 @@ function renderOrderProducts(products){
 
 async function saveOrder(){
   const sede = $("sede").value;
-  const note = $("orderNote").value.trim();
   const inputs = document.querySelectorAll(".order-qty");
 
   const items = [];
@@ -741,7 +747,8 @@ async function saveOrder(){
         scortaMinima: input.dataset.scorta,
         minOrdine: minOrdine,
         multiploOrdine: multiploOrdine,
-        qtaOrdine: qta
+        qtaOrdine: qta,
+        fornitore: input.dataset.fornitore || "SENZA FORNITORE"
       });
     }
   }
@@ -758,7 +765,6 @@ async function saveOrder(){
       action: "saveOrder",
       sede: sede,
       operatoreId: APP.user.operatoreId,
-      note: note,
       items: JSON.stringify(items)
     });
 
@@ -777,6 +783,298 @@ async function saveOrder(){
     stopProgress();
     setMsg("orderMsg", err.message, "err");
   }
+}
+
+async function openReceiveModal(){
+  if (!APP.user || !APP.user.operatoreId) {
+    setMsg("mainMsg", "Sessione non valida.", "err");
+    return;
+  }
+
+  const sede = $("sede").value;
+
+  if (!sede) {
+    setMsg("mainMsg", "Seleziona una sede.", "err");
+    return;
+  }
+
+  $("receiveOperatoreBox").textContent = "Operatore: " + APP.user.nome;
+  $("receiveSedeBox").textContent = "Sede: " + sede;
+  $("receiveSupplier").innerHTML = "";
+  $("receiveList").innerHTML = "";
+  $("receiveNote").value = "";
+  $("receiveDdtFile").value = "";
+  $("receiveDdtPreview").src = "";
+
+  hide("receiveDdtPreview");
+  hide("receiveMsg");
+  hide("receiveOrderInfo");
+
+  hide("movementCard");
+  hide("ddtModal");
+  hide("orderModal");
+  show("receiveModal");
+
+  try {
+    startProgress("Caricamento fornitori", "Cerco ordini aperti…");
+
+    const res = await jsonpRequest({
+      action: "getOpenSuppliers",
+      sede: sede,
+      operatoreId: APP.user.operatoreId
+    });
+
+    if (!res.ok) throw new Error(res.error || "Errore fornitori");
+
+    stopProgress("Fornitori caricati");
+
+    if (!res.suppliers.length) {
+      $("receiveSupplier").innerHTML = '<option value="">Nessun ordine aperto</option>';
+      return;
+    }
+
+    $("receiveSupplier").innerHTML = '<option value="">Seleziona fornitore</option>';
+
+    res.suppliers.forEach(f => {
+      const opt = document.createElement("option");
+      opt.value = f;
+      opt.textContent = f;
+      $("receiveSupplier").appendChild(opt);
+    });
+
+  } catch (err) {
+    stopProgress();
+    setMsg("receiveMsg", err.message, "err");
+  }
+}
+
+function closeReceiveModal(){
+  hide("receiveModal");
+}
+
+function previewReceiveDdt(input){
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+    $("receiveDdtPreview").src = e.target.result;
+    show("receiveDdtPreview");
+  };
+
+  reader.readAsDataURL(file);
+}
+
+async function loadLatestOrder(){
+  const sede = $("sede").value;
+  const fornitore = $("receiveSupplier").value;
+
+  if (!fornitore) {
+    setMsg("receiveMsg", "Seleziona un fornitore.", "err");
+    return;
+  }
+
+  try {
+    startProgress("Caricamento ordine", "Cerco ultimo ordine aperto…");
+
+    const res = await jsonpRequest({
+      action: "getLatestOrder",
+      sede: sede,
+      fornitore: fornitore,
+      operatoreId: APP.user.operatoreId
+    });
+
+    if (!res.ok) throw new Error(res.error || "Errore ordine");
+
+    stopProgress("Ordine caricato");
+
+    if (!res.found) {
+      setMsg("receiveMsg", "Nessun ordine aperto per questo fornitore.", "warn");
+      return;
+    }
+
+    $("receiveOrderInfo").dataset.idordine = res.idOrdine;
+    $("receiveOrderInfo").innerHTML = "<b>Ordine:</b> " + res.idOrdine + "<br><b>Fornitore:</b> " + res.fornitore;
+    show("receiveOrderInfo");
+
+    renderReceiveItems(res.items || []);
+
+  } catch (err) {
+    stopProgress();
+    setMsg("receiveMsg", err.message, "err");
+  }
+}
+
+function renderReceiveItems(items){
+  const box = $("receiveList");
+  box.innerHTML = "";
+
+  if (!items.length) {
+    box.innerHTML = '<div class="msg ok">Ordine già completamente ricevuto.</div>';
+    return;
+  }
+
+  items.forEach(item => {
+    const html = `
+      <div class="receive-item">
+        <div class="receive-title">${item.prodotto}</div>
+        <div class="receive-small">
+          Codice: ${item.barcode}<br>
+          Ordinato: ${item.qtaOrdine}<br>
+          Già ricevuto: ${item.qtaRicevuta}<br>
+          Da ricevere: ${item.residuo}
+        </div>
+
+        <label>Quantità ricevuta</label>
+        <input
+          type="number"
+          min="0"
+          max="${item.residuo}"
+          value="${item.residuo}"
+          class="receive-qty"
+          data-barcode="${item.barcode}"
+          data-prodotto="${item.prodotto}">
+      </div>
+    `;
+
+    box.insertAdjacentHTML("beforeend", html);
+  });
+}
+
+async function saveReceive(){
+  const sede = $("sede").value;
+  const fornitore = $("receiveSupplier").value;
+  const idOrdine = $("receiveOrderInfo").dataset.idordine || "";
+  const note = $("receiveNote").value.trim();
+  const inputs = document.querySelectorAll(".receive-qty");
+  const file = $("receiveDdtFile").files && $("receiveDdtFile").files[0];
+
+  if (!fornitore) {
+    setMsg("receiveMsg", "Seleziona un fornitore.", "err");
+    return;
+  }
+
+  if (!idOrdine) {
+    setMsg("receiveMsg", "Carica prima l'ordine.", "err");
+    return;
+  }
+
+  const items = [];
+
+  inputs.forEach(input => {
+    const qta = Number(input.value || 0);
+
+    if (qta > 0) {
+      items.push({
+        barcode: input.dataset.barcode,
+        prodotto: input.dataset.prodotto,
+        qtaRicevuta: qta
+      });
+    }
+  });
+
+  if (!items.length) {
+    setMsg("receiveMsg", "Nessuna quantità ricevuta.", "err");
+    return;
+  }
+
+  try {
+    startProgress("Ricevimento merce", "Preparazione dati…");
+
+    let dataUrl = "";
+
+    if (file) {
+      dataUrl = await resizeImageToJpegBase64(file);
+    }
+
+    startProgress("Salvataggio ricevimento", "Aggiornamento magazzino…");
+
+    await postReceiveForm({
+      operatoreId: APP.user.operatoreId,
+      sede: sede,
+      fornitore: fornitore,
+      idOrdine: idOrdine,
+      note: note,
+      items: JSON.stringify(items),
+      dataUrl: dataUrl,
+      fileName: file ? file.name : ""
+    });
+
+    stopProgress("Ricevimento salvato");
+
+    setMsg("receiveMsg", "Merce ricevuta e magazzino aggiornato.", "ok");
+
+    setTimeout(() => {
+      closeReceiveModal();
+      setMsg("mainMsg", "Ricevimento merce completato.", "ok");
+    }, 900);
+
+  } catch (err) {
+    stopProgress();
+    setMsg("receiveMsg", err.message, "err");
+  }
+}
+
+function postReceiveForm(payload){
+  return new Promise((resolve, reject) => {
+    const iframeName = "receive_iframe_" + Date.now();
+
+    const iframe = document.createElement("iframe");
+    iframe.name = iframeName;
+    iframe.style.display = "none";
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = API_URL;
+    form.target = iframeName;
+    form.style.display = "none";
+
+    const fields = {
+      action: "receiveOrderPost",
+      operatoreId: payload.operatoreId,
+      sede: payload.sede,
+      fornitore: payload.fornitore,
+      idOrdine: payload.idOrdine,
+      note: payload.note,
+      items: payload.items,
+      dataUrl: payload.dataUrl,
+      fileName: payload.fileName
+    };
+
+    Object.keys(fields).forEach(key => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = fields[key] || "";
+      form.appendChild(input);
+    });
+
+    let submitted = false;
+
+    iframe.onload = function(){
+      if (!submitted) return;
+
+      setTimeout(() => {
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        if (form.parentNode) form.parentNode.removeChild(form);
+      }, 500);
+
+      resolve({ ok: true });
+    };
+
+    iframe.onerror = function(){
+      reject(new Error("Errore salvataggio ricevimento"));
+    };
+
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+
+    setTimeout(() => {
+      submitted = true;
+      form.submit();
+    }, 100);
+  });
 }
 
 window.onload = initApp;
