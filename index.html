@@ -44,7 +44,7 @@
       <label for="sede">Sede</label>
       <select id="sede"></select>
 
-      <button class="btn btn-success" onclick="openAction('CARICO')">Carica Prodotto</button>
+      <button class="btn btn-success" onclick="openReceiveModal()">Ricevi Merce</button>
       <button class="btn btn-danger" onclick="openAction('SCARICO')">Scarica Prodotto</button>
       <button class="btn btn-warning" onclick="openDdtModal()">Carica DDT</button>
       <button class="btn btn-primary" onclick="openOrderModal()">Nuovo Ordine</button>
@@ -124,6 +124,39 @@
         <button class="btn btn-light" onclick="closeOrderModal()">Chiudi</button>
 
         <div id="orderMsg" class="msg info hidden"></div>
+      </div>
+    </div>
+
+    <div id="receiveModal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h2>Ricevi Merce</h2>
+          <button class="modal-close" onclick="closeReceiveModal()">×</button>
+        </div>
+
+        <div class="meta-box" id="receiveOperatoreBox">Operatore: --</div>
+        <div class="meta-box" id="receiveSedeBox">Sede: --</div>
+
+        <label for="receiveSupplier">Fornitore</label>
+        <select id="receiveSupplier"></select>
+
+        <button class="btn btn-light" onclick="loadLatestOrder()">Carica ultimo ordine</button>
+
+        <div id="receiveOrderInfo" class="msg info hidden"></div>
+        <div id="receiveList"></div>
+
+        <label for="receiveDdtFile">Foto DDT</label>
+        <input id="receiveDdtFile" type="file" accept="image/*" capture="environment" onchange="previewReceiveDdt(this)" />
+
+        <img id="receiveDdtPreview" class="preview hidden" alt="Anteprima DDT" />
+
+        <label for="receiveNote">Note ricevimento</label>
+        <textarea id="receiveNote" placeholder="Note sul DDT o differenze"></textarea>
+
+        <button class="btn btn-primary" onclick="saveReceive()">Conferma Ricevimento</button>
+        <button class="btn btn-light" onclick="closeReceiveModal()">Chiudi</button>
+
+        <div id="receiveMsg" class="msg info hidden"></div>
       </div>
     </div>
 
