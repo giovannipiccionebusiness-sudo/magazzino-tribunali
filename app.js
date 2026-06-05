@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzqwAFHHkUbePs_TOIW7D7_D5kZGoYIKFPKOHGOP3dyEM1bh3PzcEr1yIbE4c2UET5v/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbycWKrF2CjuBGA9RXrb-KBz6WoNV3ER6N_ElnX-zpWIs6EUQN6JATUrLskhv0xpE3E/exec";
 
 let APP = {
   user: null,
@@ -634,6 +634,27 @@ function closeOrderModal(){
   hide("orderModal");
 }
 
+function buildQtyOptions(qtaSuggerita, minOrdine, multiploOrdine){
+  minOrdine = Number(minOrdine || 1);
+  multiploOrdine = Number(multiploOrdine || 1);
+  qtaSuggerita = Number(qtaSuggerita || minOrdine);
+
+  let start = Math.max(minOrdine, qtaSuggerita);
+
+  if (multiploOrdine > 1) {
+    start = Math.ceil(start / multiploOrdine) * multiploOrdine;
+  }
+
+  let options = "";
+
+  for (let i = 0; i < 10; i++) {
+    const value = start + (i * multiploOrdine);
+    options += `<option value="${value}">${value}</option>`;
+  }
+
+  return options;
+}
+
 function renderOrderProducts(products){
   const box = $("orderList");
   box.innerHTML = "";
@@ -656,6 +677,8 @@ function renderOrderProducts(products){
       ? '<br>Multiplo obbligatorio: ' + multiploOrdine
       : '';
 
+    const options = buildQtyOptions(qtaSuggerita, minOrdine, multiploOrdine);
+
     const html = `
       <div class="order-item">
         ${img}
@@ -670,11 +693,7 @@ function renderOrderProducts(products){
         </div>
 
         <label>Quantità ordine</label>
-        <input
-          type="number"
-          min="${minOrdine}"
-          step="${multiploOrdine}"
-          value="${qtaSuggerita}"
+        <select
           class="order-qty"
           data-barcode="${p.barcode}"
           data-prodotto="${p.prodotto}"
@@ -682,6 +701,8 @@ function renderOrderProducts(products){
           data-scorta="${p.scortaMinima}"
           data-minordine="${minOrdine}"
           data-multiplo="${multiploOrdine}">
+          ${options}
+        </select>
       </div>
     `;
 
