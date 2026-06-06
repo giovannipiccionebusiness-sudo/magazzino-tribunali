@@ -3,15 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Magazzini Dussmann</title>
+
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#1f4e78" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="Magazzini" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+  <meta name="theme-color" content="#1f4e78" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Magazzini" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
+
 <body>
   <div class="wrap">
 
@@ -53,6 +60,15 @@
       <button class="btn btn-danger" onclick="openDeliveryModal()">Consegna Materiale</button>
       <button class="btn btn-warning" onclick="openDdtModal()">Carica DDT</button>
       <button class="btn btn-primary" onclick="openOrderModal()">Nuovo Ordine</button>
+
+      <button id="installBtn" class="btn btn-light hidden" onclick="installApp()">
+        Installa app sul telefono
+      </button>
+
+      <div id="iosInstallMsg" class="msg info hidden">
+        Su iPhone: apri con Safari, premi Condividi e poi “Aggiungi alla schermata Home”.
+      </div>
+
       <button class="btn btn-light" onclick="logoutApp()">Cambia operatore</button>
 
       <div id="mainMsg" class="msg info">Seleziona la sede e scegli l’operazione.</div>
