@@ -930,6 +930,35 @@ async function saveOrder(){
   }
 
   if (!items.length) {
+    setMsg("orderMsg", "Seleziona almeno un articolo da ordinare.", "err");
+    return;
+  }
+
+  try {
+    startProgress("Salvataggio ordine", "Registrazione ordine…");
+
+    await postOrderForm({
+      operatoreId: APP.user.operatoreId,
+      sede: sede,
+      items: JSON.stringify(items)
+    });
+
+    stopProgress("Ordine salvato");
+
+    setMsg("orderMsg", "Ordine salvato correttamente.", "ok");
+
+    setTimeout(() => {
+      closeOrderModal();
+      setMsg("mainMsg", "Nuovo ordine salvato correttamente.", "ok");
+    }, 900);
+
+  } catch (err) {
+    stopProgress();
+    setMsg("orderMsg", err.message, "err");
+  }
+}
+
+  if (!items.length) {
     setMsg("orderMsg", "Nessun prodotto selezionato.", "err");
     return;
   }
