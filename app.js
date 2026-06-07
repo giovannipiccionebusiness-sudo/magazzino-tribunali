@@ -893,41 +893,61 @@ function renderOrderProducts(products){
   });
 }
 
-async function saveOrder(){
-  const sede = $("sede").value;
-  const inputs = document.querySelectorAll(".order-qty");
+function postOrderForm(payload){
+  return new Promise((resolve, reject) => {
+    const iframeName = "order_iframe_" + Date.now();
 
-  const items = [];
+    const iframe = document.createElement("iframe");
+    iframe.name = iframeName;
+    iframe.style.display = "none";
 
-  for (const input of inputs) {
-    const qta = Number(input.value || 0);
-    const minOrdine = Number(input.dataset.minordine || 1);
-    const multiploOrdine = Number(input.dataset.multiplo || 1);
-    const prodotto = input.dataset.prodotto;
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = API_URL;
+    form.target = iframeName;
+    form.style.display = "none";
 
-    if (qta > 0) {
-      if (qta < minOrdine) {
-        setMsg("orderMsg", prodotto + ": quantità minima ordinabile " + minOrdine, "err");
-        return;
-      }
+    const fields = {
+      action: "saveOrderPost",
+      operatoreId: payload.operatoreId,
+      sede: payload.sede,
+      items: payload.items
+    };
 
-      if (multiploOrdine > 1 && qta % multiploOrdine !== 0) {
-        setMsg("orderMsg", prodotto + ": ordinabile solo in multipli di " + multiploOrdine, "err");
-        return;
-      }
+    Object.keys(fields).forEach(key => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = fields[key] || "";
+      form.appendChild(input);
+    });
 
-      items.push({
-        barcode: input.dataset.barcode,
-        prodotto: prodotto,
-        giacenza: input.dataset.giacenza,
-        scortaMinima: input.dataset.scorta,
-        minOrdine: minOrdine,
-        multiploOrdine: multiploOrdine,
-        qtaOrdine: qta,
-        fornitore: input.dataset.fornitore || "SENZA FORNITORE"
-      });
-    }
-  }
+    let submitted = false;
+
+    iframe.onload = function(){
+      if (!submitted) return;
+
+      setTimeout(() => {
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        if (form.parentNode) form.parentNode.removeChild(form);
+      }, 500);
+
+      resolve({ ok: true });
+    };
+
+    iframe.onerror = function(){
+      reject(new Error("Errore salvataggio ordine"));
+    };
+
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+
+    setTimeout(() => {
+      submitted = true;
+      form.submit();
+    }, 100);
+  });
+}
 
   if (!items.length) {
     setMsg("orderMsg", "Nessun prodotto selezionato.", "err");
