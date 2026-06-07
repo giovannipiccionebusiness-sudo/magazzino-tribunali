@@ -843,6 +843,9 @@ function renderOrderProducts(products){
     const multiploOrdine = Number(p.multiploOrdine || 1);
     const qtaSuggerita = Number(p.qtaSuggerita || minOrdine);
 
+    const sottoScorta = Number(p.giacenza || 0) <= Number(p.scortaMinima || 0);
+    const alertClass = sottoScorta ? " order-alert" : "";
+
     const img = p.linkFoto
       ? '<img class="order-img" src="' + p.linkFoto + '" alt="Foto prodotto">'
       : '';
@@ -854,9 +857,13 @@ function renderOrderProducts(products){
     const options = buildQtyOptions(qtaSuggerita, minOrdine, multiploOrdine);
 
     const html = `
-      <div class="order-item">
+      <div class="order-item${alertClass}">
         ${img}
+
+        ${sottoScorta ? '<div class="stock-warning">⚠️ Prodotto sotto scorta</div>' : ''}
+
         <div class="order-title">${p.prodotto}</div>
+
         <div class="order-small">
           Codice: ${p.barcode}<br>
           Fornitore: ${p.fornitore || "-"}<br>
@@ -864,7 +871,7 @@ function renderOrderProducts(products){
           Scorta minima: ${p.scortaMinima}<br>
           Ordine minimo fornitore: ${minOrdine}
           ${multiploText}<br>
-          Quantità suggerita: ${qtaSuggerita}
+          Quantità consigliata: ${qtaSuggerita}
         </div>
 
         <label>Quantità ordine</label>
