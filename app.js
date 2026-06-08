@@ -78,6 +78,7 @@ function restoreSessionIfAvailable(){
   hide("loginCard");
   show("appCard");
   setMsg("mainMsg", "Sessione ripristinata.", "ok");
+  setupAdminDashboardButton();
 
   return true;
 }
@@ -184,6 +185,7 @@ async function doLogin(){
     show("appCard");
 
     setMsg("mainMsg", "Accesso effettuato correttamente.", "ok");
+    setupAdminDashboardButton();
     stopProgress("Accesso completato");
 
   } catch (err) {
@@ -228,6 +230,7 @@ function hideAllModals(){
   hide("orderModal");
   hide("receiveModal");
   hide("deliveryModal");
+  hide("adminDashboardModal");
 }
 
 function openAction(tipo){
@@ -1301,6 +1304,123 @@ function postReceiveForm(payload){
       submitted = true;
       form.submit();
     }, 100);
+  });
+}
+
+let chartConsumiSede = null;
+let chartTopProdotti = null;
+
+function setupAdminDashboardButton(){
+  const btn = $("adminDashboardBtn");
+
+  if (!btn || !APP.user) return;
+
+  if (APP.user.role === "ADMIN") {
+    btn.classList.remove("hidden");
+  } else {
+    btn.classList.add("hidden");
+  }
+}
+
+function openAdminDashboard(){
+  hideAllModals();
+  show("adminDashboardModal");
+  loadAdminDashboard();
+}
+
+function closeAdminDashboard(){
+  hide("adminDashboardModal");
+}
+
+async function loadAdminDashboard(){
+  if (!APP.user || APP.user.role !== "ADMIN") {
+    setMsg("mainMsg", "Accesso non autorizzato.", "err");
+    return;
+  }
+
+  try {
+    startProgress("Dashboard", "Caricamento dati amministratore…");
+
+    const res = await jsonpRequest({
+      action: "getAdminDashboard",
+      operatoreId: APP.user.operatoreId
+    });
+
+    if (!res.ok) throw new Error(res.error || "Errore dashboard");
+
+    $("kpiSottoScorta").textContent = res.kpi.prodottiSottoScorta || 0;
+    $("kpiZero").textContent = res.kpi.prodottiZero || 0;
+    $("kpiOrdiniAperti").textContent = res.kpi.ordiniAperti || 0;
+    $("kpiConsegneMese").textContent = res.kpi.consegneMese || 0;
+
+    renderAdminCharts(res);
+
+    stopProgress("Dashboard caricata");
+
+  } catch (err) {
+    stopProgress();
+    setMsg("adminDashboardMsg", err.message, "err");
+  }
+}
+
+function renderAdminCharts(data){
+  renderConsumiSedeChart(data.consumiPerSede || []);
+  renderTopProdottiChart(data.topProdotti || []);
+}
+
+function renderConsumiSedeChart(rows){
+  const ctx = $("chartConsumiSede");
+
+  if (chartConsumiSede) {
+    chartConsumiSede.destroy();
+  }
+
+  chartConsumiSede = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: rows.map(x => x.sede),
+      datasets: [{
+        label: "Quantità scaricata",
+        data: rows.map(x => x.consumo)
+      }]
+    },
+    options: {
+      responsive: true,
+      indexAxis: "y",
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
+}
+
+function renderTopProdottiChart(rows){
+  const ctx = $("chartTopProdotti");
+
+  if (chartTopProdotti) {
+    chartTopProdotti.destroy();
+  }
+
+  chartTopProdotti = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: rows.map(x => x.prodotto),
+      datasets: [{
+        label: "Quantità",
+        data: rows.map(x => x.quantita)
+      }]
+    },
+    options: {
+      responsive: true,
+      indexAxis: "y",
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
   });
 }
 
