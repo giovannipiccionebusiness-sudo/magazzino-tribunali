@@ -338,7 +338,8 @@ button{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:14px;
-  margin-bottom:22px;
+  margin-top:22px;
+  margin-bottom:20px;
 }
 
 .admin-kpi{
@@ -372,12 +373,11 @@ button{
 .dashboard-subtitle{
   font-size:14px;
   color:#637381;
-  margin-bottom:22px;
+  margin-bottom:18px;
   font-weight:600;
 }
 
 .chart-box{
-  display:block;
   width:100%;
   box-sizing:border-box;
   background:#fff;
@@ -386,6 +386,7 @@ button{
   padding:12px;
   margin-bottom:16px;
   overflow:hidden;
+  display:block;
   clear:both;
 }
 
@@ -403,20 +404,6 @@ button{
 }
 
 #adminDashboardModal .modal-card{
-  max-width:760px;
-}
-
-@media (max-width: 700px){
-  #adminDashboardModal .modal-card{
-    max-width:520px;
-    width:100%;
-  }
-
-  .admin-kpi-grid{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .chart-box canvas{
-    height:280px !important;
-  }
+  max-width:520px;
+  width:100%;
 }
